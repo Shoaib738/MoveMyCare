@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoveMyCar UAE – Vehicle collection &amp; delivery by professional drivers</title>
+<meta name="description" content="Book a vetted professional driver to collect and deliver your vehicle anywhere in the UAE. Live GPS tracking, photo handover reports and instant online quotes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --ink:#0E1A24;--ink-2:#16293A;--ink-3:#24384A;--ground:#F6F4EF;--line:#E4E1DA;
+  --muted:#4A5866;--muted-2:#9FB0BE;--accent:#C9441C;--accent-2:#FF7A45;--accent-soft:#FBE6DD;
+  --ok:#0F766E;--ok-soft:#DDF3EC;--radius:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--ground);-webkit-font-smoothing:antialiased;line-height:1.5}
+h1,h2,h3,h4{font-family:'Inter Tight',Inter,sans-serif;letter-spacing:-.02em;margin:0}
+a{color:var(--accent);text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.h2{font-size:clamp(30px,4vw,46px);line-height:1.08;margin:12px 0 16px}
+.lead{font-size:17px;color:var(--muted);line-height:1.6;margin:0}
+section{scroll-margin-top:80px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:10px;font:600 15px Inter,sans-serif;border:0;cursor:pointer;transition:transform .15s,background .2s,box-shadow .2s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 10px 24px -12px rgba(201,68,28,.7)}
+.btn-primary:hover{background:#B03A16}
+.btn-dark{background:var(--ink);color:#fff}.btn-dark:hover{background:#1C2E3D}
+.btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}.btn-ghost:hover{border-color:#fff}
+.btn-line{background:#fff;color:var(--ink);border:1px solid #C9CDD1}.btn-line:hover{border-color:var(--ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+
+/* nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .3s,box-shadow .3s,padding .3s;padding:18px 0}
+.nav.scrolled{background:rgba(14,26,36,.96);backdrop-filter:blur(10px);box-shadow:0 10px 30px -20px rgba(0,0,0,.6);padding:10px 0}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;font:800 21px 'Inter Tight',sans-serif;letter-spacing:-.02em}
+.logo span{color:var(--accent-2)}
+.navlinks{display:flex;gap:28px}
+.navlinks a{color:#D6DEE5;font-size:14px;font-weight:500;position:relative}
+.navlinks a:hover{color:#fff}
+.navlinks a::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--accent-2);transform:scaleX(0);transition:transform .25s}
+.navlinks a:hover::after{transform:scaleX(1)}
+.nav-actions{display:flex;gap:10px;align-items:center}
+.lang{background:none;border:0;color:#D6DEE5;font:500 14px Inter;cursor:pointer;min-height:44px;padding:0 8px}
+.burger{display:none;background:none;border:0;color:#fff;width:44px;height:44px;cursor:pointer}
+.mobile-menu{display:none}
+@media (max-width:960px){
+  .navlinks,.nav-actions .hide-m{display:none}
+  .burger{display:inline-flex;align-items:center;justify-content:center}
+  .mobile-menu.open{display:flex;flex-direction:column;gap:4px;background:var(--ink);padding:12px 24px 20px}
+  .mobile-menu a{color:#fff;padding:12px 0;border-bottom:1px solid var(--ink-3)}
+}
+
+/* hero */
+.hero{position:relative;min-height:760px;color:#fff;display:flex;align-items:center;overflow:hidden;background:var(--ink)}
+.hero-bg{position:absolute;inset:0;background:var(--ink) center/cover no-repeat;transform:scale(1.08);animation:kenburns 22s ease-out forwards}
+@keyframes kenburns{to{transform:scale(1)}}
+.hero::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(14,26,36,.95) 0%,rgba(14,26,36,.82) 45%,rgba(14,26,36,.35) 100%)}
+.hero .wrap{position:relative;z-index:2;padding-top:130px;padding-bottom:150px;width:100%}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid rgba(255,255,255,.22);border-radius:999px;font-size:13px;color:#DCE3E9;background:rgba(14,26,36,.4);backdrop-filter:blur(6px)}
+.dot-live{width:8px;height:8px;border-radius:50%;background:#3DDC97;box-shadow:0 0 0 0 rgba(61,220,151,.7);animation:livepulse 1.8s infinite}
+@keyframes livepulse{70%{box-shadow:0 0 0 10px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+.hero h1{font-size:clamp(40px,6vw,68px);line-height:1.02;font-weight:800;margin:22px 0 20px;max-width:760px}
+.hero h1 em{font-style:normal;color:var(--accent-2)}
+.rotator{display:inline-block;position:relative;min-width:6ch}
+.rotator span{display:inline-block;animation:wordin .5s ease both}
+@keyframes wordin{from{opacity:0;transform:translateY(40%)}to{opacity:1;transform:none}}
+.hero p.sub{font-size:19px;color:#C7D2DB;max-width:560px;margin:0 0 30px}
+.checks{display:flex;gap:26px;flex-wrap:wrap;font-size:14px;color:#DCE3E9}
+.checks span{display:flex;gap:8px;align-items:center}
+
+/* booking widget */
+.booker{position:relative;z-index:5;margin-top:-90px}
+.booker .card{background:#fff;border-radius:18px;box-shadow:0 30px 70px -30px rgba(14,26,36,.45);overflow:hidden}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:0 16px}
+.tab{min-height:52px;padding:0 18px;border:0;background:none;font:600 14px Inter;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;display:flex;gap:8px;align-items:center}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+.form-row{display:flex;flex-wrap:wrap;gap:14px;padding:22px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:6px;flex:1 1 170px;min-width:0}
+.field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.field input,.field select,.field textarea{height:48px;border:1px solid #D5D9DD;border-radius:10px;padding:0 12px;font:15px Inter;background:#fff;color:var(--ink);width:100%;transition:border-color .2s,box-shadow .2s}
+.field textarea{height:auto;padding:12px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(201,68,28,.15)}
+.field.err input,.field.err select{border-color:#B42318;box-shadow:0 0 0 3px rgba(180,35,24,.12)}
+.field .msg{font-size:12px;color:#B42318;min-height:0}
+.swap{width:44px;height:48px;border-radius:10px;border:1px solid #D5D9DD;background:#fff;cursor:pointer;flex:0 0 auto;display:flex;align-items:center;justify-content:center;transition:transform .3s}
+.swap:hover{transform:rotate(180deg);border-color:var(--ink)}
+.quote{margin:0 22px 22px;padding:20px;border-radius:12px;background:var(--ground);display:none;flex-wrap:wrap;gap:22px;align-items:center}
+.quote.show{display:flex;animation:rise .45s ease both}
+.qlabel{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.qval{font:700 28px 'Inter Tight',sans-serif}
+.qval.price{color:var(--accent)}
+.multi-note{font-size:13px;color:var(--muted);padding:0 22px 18px;display:none}
+
+/* marquee */
+.strip{padding:60px 0 20px;overflow:hidden}
+.strip .label{text-align:center;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:22px}
+.mask{-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marquee{display:flex;gap:56px;width:max-content;animation:slide 40s linear infinite;font:700 30px 'Inter Tight',sans-serif;color:#A3ADB7}
+.marquee span::after{content:"•";margin-left:56px;color:var(--accent-2)}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* cards / grid */
+.grid{display:grid;gap:20px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card-w{background:#fff;border:1px solid var(--line);border-radius:var(--radius)}
+.lift{transition:transform .3s,box-shadow .3s}.lift:hover{transform:translateY(-6px);box-shadow:0 24px 50px -28px rgba(14,26,36,.45)}
+.step{padding:28px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.step .num{font:800 54px 'Inter Tight';color:#EFEBE3;position:absolute;right:18px;top:8px;line-height:1}
+.ico{width:52px;height:52px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.step h3{font-size:21px}
+.step p{margin:0;color:var(--muted);font-size:15px}
+.progress-line{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:auto}
+.progress-line i{display:block;height:100%;width:0;background:var(--accent);transition:width 1.2s ease}
+.in .progress-line i{width:100%}
+
+/* audience w/ photos */
+.aud{border-radius:var(--radius);overflow:hidden;position:relative;min-height:420px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;background:var(--ink-2)}
+.aud img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s ease}
+.aud:hover img{transform:scale(1.07)}
+.aud::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,26,36,.05) 20%,rgba(14,26,36,.92) 78%)}
+.aud .body{position:relative;z-index:1;padding:26px}
+.aud .tag{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2)}
+.aud h3{font-size:24px;margin:8px 0 10px}
+.aud ul{margin:0 0 14px;padding:0;list-style:none;font-size:14px;color:#DCE3E9;display:grid;gap:6px}
+.aud ul li::before{content:"— ";color:var(--accent-2)}
+.aud a{color:#fff;font-weight:600;display:inline-flex;gap:6px;align-items:center;min-height:44px}
+.aud a:hover{color:var(--accent-2)}
+
+/* routes */
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chip{min-height:40px;padding:0 16px;border-radius:999px;border:1px solid #CDD2D6;background:#fff;font:600 14px Inter;color:var(--ink);cursor:pointer;transition:all .2s}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.route{padding:20px;display:flex;flex-direction:column;gap:14px}
+.route .rt{display:flex;align-items:center;gap:10px;font:700 18px 'Inter Tight'}
+.route .meta{display:flex;gap:16px;font-size:13px;color:var(--muted)}
+.route .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);padding-top:14px}
+.route .from{font-size:12px;color:var(--muted)}
+.route .amt{font:800 24px 'Inter Tight'}
+.route.hide{display:none}
+
+/* tracking */
+.track{background:var(--ink);color:#fff}
+.track .wrap{padding-top:100px;padding-bottom:100px;display:grid;grid-template-columns:1fr 1.25fr;gap:56px;align-items:center}
+@media (max-width:960px){.track .wrap{grid-template-columns:1fr}}
+.track .lead{color:#C7D2DB}
+.track-form{display:flex;gap:10px;margin:26px 0 8px;flex-wrap:wrap}
+.track-form input{flex:1 1 220px;height:50px;border-radius:10px;border:1px solid var(--ink-3);background:var(--ink-2);color:#fff;padding:0 14px;font:15px Inter;text-transform:uppercase}
+.track-form input::placeholder{text-transform:none;color:#7F93A3}
+.track-form input:focus{outline:none;border-color:var(--accent-2)}
+.hint{font-size:13px;color:var(--muted-2)}
+.hint button{background:none;border:0;color:var(--accent-2);font:600 13px Inter;cursor:pointer;padding:0;text-decoration:underline}
+.tl{list-style:none;padding:0;margin:26px 0 0}
+.tl li{display:flex;gap:14px;opacity:.35;transition:opacity .4s}
+.tl li.done,.tl li.now{opacity:1}
+.tl .rail{display:flex;flex-direction:column;align-items:center}
+.tl .b{width:14px;height:14px;border-radius:50%;background:var(--ink-3);border:3px solid var(--ink-2);margin-top:4px;transition:background .3s}
+.tl li.done .b{background:#3DDC97}
+.tl li.now .b{background:var(--accent-2);box-shadow:0 0 0 0 rgba(255,122,69,.7);animation:pulse2 1.6s infinite}
+@keyframes pulse2{70%{box-shadow:0 0 0 10px rgba(255,122,69,0)}100%{box-shadow:none}}
+.tl .l{width:2px;flex:1;background:var(--ink-3);min-height:26px}
+.tl li:last-child .l{display:none}
+.tl .t{font-weight:600;font-size:15px}
+.tl .m{font-size:13px;color:var(--muted-2);padding-bottom:16px}
+.mapcard{border-radius:20px;overflow:hidden;border:1px solid var(--ink-3);background:var(--ink-2);box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}
+#map{height:420px;background:#1b2b39}
+.leaflet-container{font-family:Inter,sans-serif}
+.mapbar{display:flex;gap:16px;align-items:center;padding:16px 20px;flex-wrap:wrap}
+.avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;background:var(--ink-3)}
+.eta{font:700 26px 'Inter Tight';color:#3DDC97}
+.car-marker{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(255,122,69,.3),0 6px 14px rgba(0,0,0,.4)}
+.car-marker i{width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.pin{width:18px;height:18px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+
+/* handover */
+.handover .wrap{padding-top:100px;padding-bottom:100px;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+@media (max-width:960px){.handover .wrap{grid-template-columns:1fr}}
+.report{padding:26px}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.photos figure{margin:0;border-radius:10px;overflow:hidden;position:relative;aspect-ratio:1;background:#E9ECEF;cursor:zoom-in}
+.photos img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.photos figure:hover img{transform:scale(1.08)}
+.photos figcaption{position:absolute;left:6px;bottom:6px;font-size:10px;font-weight:700;color:#fff;background:rgba(14,26,36,.75);padding:2px 6px;border-radius:5px}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stat3 div{background:var(--ground);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted)}
+.stat3 b{display:block;color:var(--ink);font-size:15px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--ok-soft);color:#0B5E57}
+.feature-list{display:grid;gap:18px;margin-top:28px}
+.feature-list div{display:flex;gap:14px}
+.feature-list svg{flex:0 0 auto;color:var(--accent)}
+.feature-list b{display:block}
+.feature-list span{color:var(--muted);font-size:15px}
+
+/* business */
+.biz{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.biz .wrap{padding-top:100px;padding-bottom:100px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+@media (max-width:960px){.biz .wrap{grid-template-columns:1fr}}
+.feat4{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:28px 0}
+.feat4 div{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--ground)}
+.feat4 b{display:block}
+.feat4 span{font-size:14px;color:var(--muted)}
+.biz-img{border-radius:var(--radius);overflow:hidden;height:220px;background:var(--ink-2);position:relative}
+.biz-img img{width:100%;height:100%;object-fit:cover}
+.formcard{padding:28px}
+.formcard h3{font-size:22px;margin-bottom:4px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.formgrid .full{grid-column:1/-1}
+@media (max-width:560px){.formgrid{grid-template-columns:1fr}}
+.success{display:none;text-align:center;padding:40px 20px}
+.success.show{display:block;animation:rise .5s ease both}
+.tickc{width:64px;height:64px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.tickc path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .6s .2s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* drivers */
+.drivers .wrap{padding-top:100px;padding-bottom:100px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+@media (max-width:960px){.drivers .wrap{grid-template-columns:1fr}}
+.driver-photo{border-radius:20px;overflow:hidden;height:560px;position:relative;background:var(--ink-2)}
+.driver-photo img{width:100%;height:100%;object-fit:cover}
+.float-card{position:absolute;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 20px 40px -18px rgba(0,0,0,.45);display:flex;gap:12px;align-items:center;animation:bob 5s ease-in-out infinite}
+.float-card.two{animation-delay:-2.5s}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.earn{background:var(--ink);color:#fff;border-radius:16px;padding:22px;margin:26px 0}
+.earn input[type=range]{width:100%;accent-color:var(--accent-2);height:28px}
+.earn .big{font:800 36px 'Inter Tight';color:var(--accent-2)}
+.req{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px}
+.req div{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.req svg{flex:0 0 auto;color:var(--ok);margin-top:2px}
+
+/* faq */
+.faq{background:#fff;border-top:1px solid var(--line)}
+.faq .wrap{padding-top:90px;padding-bottom:90px;display:grid;grid-template-columns:1fr 2fr;gap:48px}
+@media (max-width:860px){.faq .wrap{grid-template-columns:1fr}}
+.qa{border-bottom:1px solid var(--line)}
+.qa button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;background:none;border:0;padding:22px 0;font:600 18px 'Inter Tight';color:var(--ink);text-align:left;cursor:pointer}
+.qa .pl{font-size:26px;color:var(--accent);transition:transform .3s;flex:0 0 auto}
+.qa.open .pl{transform:rotate(45deg)}
+.qa .ans{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}
+.qa.open .ans{grid-template-rows:1fr}
+.qa .ans>div{overflow:hidden}
+.qa .ans p{margin:0 0 22px;color:var(--muted);max-width:640px}
+
+/* cta + footer */
+.cta{background:var(--accent);color:#fff;border-radius:24px;padding:56px 48px;display:flex;flex-wrap:wrap;gap:32px;align-items:center;justify-content:space-between;position:relative;overflow:hidden}
+.cta::after{content:"";position:absolute;right:-80px;top:-80px;width:320px;height:320px;border-radius:50%;border:40px solid rgba(255,255,255,.08)}
+.cta p{color:#FFE3D8;margin:10px 0 0;font-size:17px}
+footer{background:var(--ink);color:#C7D2DB;margin-top:80px}
+footer .cols{display:flex;flex-wrap:wrap;gap:40px;justify-content:space-between;padding:64px 0 32px}
+footer .col{display:flex;flex-direction:column;gap:10px;font-size:14px}
+footer .col b{color:#fff}
+footer a{color:#C7D2DB}footer a:hover{color:#fff}
+footer .bottom{border-top:1px solid var(--ink-3);padding:22px 0;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;font-size:13px;color:var(--muted-2)}
+.news{display:flex;gap:8px;margin-top:6px}
+.news input{flex:1;height:44px;border-radius:10px;border:1px solid var(--ink-3);background:var(--ink-2);color:#fff;padding:0 12px;font:14px Inter}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(14,26,36,.6);backdrop-filter:blur(4px)}
+.modal.open{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}}
+.sheet{background:#fff;border-radius:20px;width:100%;max-width:640px;max-height:92vh;overflow:auto;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.98)}}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.x{width:44px;height:44px;border:0;background:var(--ground);border-radius:10px;cursor:pointer;font-size:20px}
+.stepper{display:flex;gap:6px;padding:16px 24px 0}
+.stepper div{flex:1;height:4px;border-radius:4px;background:var(--line);transition:background .3s}
+.stepper div.on{background:var(--accent)}
+.sheet-b{padding:20px 24px}
+.sheet-f{display:flex;justify-content:space-between;gap:10px;padding:16px 24px 22px;border-top:1px solid var(--line)}
+.pane{display:none}.pane.on{display:block;animation:rise .35s ease both}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.opt{border:1.5px solid #D5D9DD;border-radius:12px;padding:14px;cursor:pointer;background:#fff;font:inherit;text-align:left;transition:all .2s}
+.opt b{display:block;font-size:14px}.opt span{font-size:12px;color:var(--muted)}
+.opt.on{border-color:var(--accent);background:#FFF8F5;box-shadow:0 0 0 3px rgba(201,68,28,.12)}
+.sumrow{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F0EEE9;font-size:14px;gap:16px}
+.sumrow span:first-child{color:var(--muted)}
+.sumrow.total{font:700 18px 'Inter Tight';border-bottom:0}
+.demo-note{background:#FFF6E0;color:#6B4A00;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:14px}
+.ref{font:800 30px 'Inter Tight';letter-spacing:.02em;color:var(--accent);margin:6px 0 4px}
+
+/* lightbox, toast */
+.lightbox{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:30px;cursor:zoom-out}
+.lightbox.open{display:flex;animation:fade .2s}
+.lightbox img{max-height:85vh;border-radius:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:14px 18px;border-radius:12px;font-size:14px;z-index:120;opacity:0;transition:all .35s;pointer-events:none;box-shadow:0 20px 40px -20px rgba(0,0,0,.6)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* whatsapp */
+.wa{position:fixed;right:22px;bottom:22px;z-index:40;width:58px;height:58px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -10px rgba(0,0,0,.5);transition:transform .2s}
+.wa:hover{transform:scale(1.08)}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.imgfail{background:linear-gradient(135deg,#1C2E3D,#0E1A24)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+[dir=rtl] .hero::before{background:linear-gradient(270deg,rgba(14,26,36,.95) 0%,rgba(14,26,36,.82) 45%,rgba(14,26,36,.35) 100%)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a href="#top" class="logo" aria-label="MoveMyCar home">
+      <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#C9441C"/><path d="M8 22.5l3.2-7.4c.4-.9 1.2-1.4 2.2-1.4h9.2c1 0 1.8.5 2.2 1.4l3.2 7.4v3.3a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-1.1H11.6v1.1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z" fill="#fff"/><circle cx="12.6" cy="21.4" r="1.4" fill="#C9441C"/><circle cx="23.4" cy="21.4" r="1.4" fill="#C9441C"/></svg>
+      MoveMyCar<span>.ae</span>
+    </a>
+    <nav class="navlinks" aria-label="Main">
+      <a href="#how" data-i18n="nav1">How it works</a>
+      <a href="#routes" data-i18n="nav2">Popular routes</a>
+      <a href="#tracking" data-i18n="nav3">Live tracking</a>
+      <a href="#business" data-i18n="nav4">For dealerships</a>
+      <a href="#drivers" data-i18n="nav5">Become a driver</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="lang" id="langBtn" aria-label="Switch language">العربية</button>
+      <a href="#business" class="btn btn-ghost hide-m" style="min-height:44px" data-i18n="login">Business login</a>
+      <button class="btn btn-primary hide-m" style="min-height:44px" data-open-booking data-i18n="book">Book a driver</button>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#how">How it works</a><a href="#routes">Popular routes</a><a href="#tracking">Live tracking</a><a href="#business">For dealerships</a><a href="#drivers">Become a driver</a>
+    <button class="btn btn-primary" style="margin-top:12px" data-open-booking>Book a driver</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="wrap">
+    <div class="pill reveal"><span class="dot-live"></span><span data-i18n="pill">Now launching across the UAE · from the UK team behind MoveMyCar</span></div>
+    <h1 class="reveal d1"><span data-i18n="h1a">Your car,</span> <span class="rotator" id="rotator"><span>delivered</span></span><br><span data-i18n="h1b">anywhere in the UAE</span><br><em data-i18n="h1c">by vetted professionals.</em></h1>
+    <p class="sub reveal d2" data-i18n="sub">Book a collection and delivery in minutes. A licensed, insured MoveMyCar driver collects your vehicle, photographs it at handover and drives it to its destination while you follow every kilometre live.</p>
+    <div class="checks reveal d3">
+      <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Fully insured trips</span>
+      <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Background-checked drivers</span>
+      <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Photo handover reports</span>
+      <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Live GPS tracking</span>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING WIDGET -->
+<div class="booker wrap" id="book">
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="single" role="tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 16l2-6c.3-.8 1-1.3 1.9-1.3h6.2c.9 0 1.6.5 1.9 1.3l2 6v3H5z"/><circle cx="8.5" cy="16" r="1"/><circle cx="15.5" cy="16" r="1"/></svg>Single vehicle</button>
+      <button class="tab" data-tab="dealer" role="tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Dealer &amp; trade</button>
+      <button class="tab" data-tab="multi" role="tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg>Multiple vehicles</button>
+    </div>
+    <form class="form-row" id="quoteForm" novalidate>
+      <div class="field"><label for="qFrom">Collect from</label><select id="qFrom"></select></div>
+      <button type="button" class="swap" id="swap" aria-label="Swap collection and delivery"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></button>
+      <div class="field"><label for="qTo">Deliver to</label><select id="qTo"></select></div>
+      <div class="field"><label for="qVeh">Vehicle</label>
+        <select id="qVeh"><option value="std">Saloon / hatchback</option><option value="suv" selected>SUV / 4x4</option><option value="prem">Prestige &amp; sports</option><option value="van">Van / light commercial</option></select></div>
+      <div class="field" style="flex:0 1 160px"><label for="qDate">Date</label><input type="date" id="qDate"></div>
+      <div class="field" style="flex:0 1 110px;display:none" id="qtyWrap"><label for="qQty">Vehicles</label><input type="number" id="qQty" min="2" max="50" value="3"></div>
+      <button type="submit" class="btn btn-primary" style="flex:0 0 auto;min-width:190px">Get instant quote</button>
+    </form>
+    <div class="multi-note" id="multiNote">Dealer &amp; trade pricing includes an account discount. Bulk moves get 10% off from 3+ vehicles. (Prototype pricing.)</div>
+    <div class="quote" id="quoteBox">
+      <div style="flex:1 1 120px"><div class="qlabel">Distance</div><div class="qval" id="qKm">–</div></div>
+      <div style="flex:1 1 120px"><div class="qlabel">Drive time</div><div class="qval" id="qTime">–</div></div>
+      <div style="flex:1 1 140px"><div class="qlabel">Your price</div><div class="qval price" id="qPrice">–</div><div style="font-size:12px;color:var(--muted)">Sample rate · incl. 5% VAT</div></div>
+      <button class="btn btn-dark" data-open-booking style="flex:0 0 auto">Continue to booking →</button>
+    </div>
+  </div>
+</div>
+
+<!-- STRIP -->
+<section class="strip" aria-label="Coverage">
+  <div class="label">Collections and deliveries across all seven emirates</div>
+  <div class="mask"><div class="marquee"><span>Dubai</span><span>Abu Dhabi</span><span>Sharjah</span><span>Ajman</span><span>Ras Al Khaimah</span><span>Fujairah</span><span>Umm Al Quwain</span><span>Al Ain</span><span>Dubai</span><span>Abu Dhabi</span><span>Sharjah</span><span>Ajman</span><span>Ras Al Khaimah</span><span>Fujairah</span><span>Umm Al Quwain</span><span>Al Ain</span></div></div>
+</section>
+
+<!-- HOW -->
+<section id="how" class="wrap" style="padding-top:80px;padding-bottom:80px">
+  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:44px">
+    <div style="max-width:640px" class="reveal"><div class="eyebrow">How it works</div><h2 class="h2">From booking to keys-in-hand, in four simple steps.</h2></div>
+    <button class="btn btn-dark reveal" data-open-booking>Start a booking</button>
+  </div>
+  <div class="grid g4">
+    <div class="card-w step lift reveal"><span class="num">01</span><div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h7M17 14l3 3-3 3"/></svg></div><h3>Get an instant price</h3><p>Choose collection and delivery points, vehicle type and date. Your price is fixed before you pay.</p><div class="progress-line"><i></i></div></div>
+    <div class="card-w step lift reveal d1"><span class="num">02</span><div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div><h3>We assign a driver</h3><p>A vetted, insured driver near your collection point is matched. You get their name, photo and rating.</p><div class="progress-line"><i></i></div></div>
+    <div class="card-w step lift reveal d2"><span class="num">03</span><div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h4l2-3h6l2 3h4v11H3zM12 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></div><h3>Photo handover</h3><p>The driver photographs every panel, records mileage and fuel, and you both sign in the app.</p><div class="progress-line"><i></i></div></div>
+    <div class="card-w step lift reveal d3"><span class="num">04</span><div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg></div><h3>Track to delivery</h3><p>Follow the journey live. On arrival a delivery report is signed and your invoice is emailed.</p><div class="progress-line"><i></i></div></div>
+  </div>
+</section>
+
+<!-- AUDIENCES -->
+<section class="wrap" style="padding-bottom:80px">
+  <div class="reveal" style="max-width:700px;margin-bottom:40px"><div class="eyebrow">Built for every vehicle move</div><h2 class="h2">One platform for customers, dealerships, traders and fleets.</h2><p class="lead">One car across town or fifty stock vehicles this week — MoveMyCar handles the driver, the paperwork and the proof of condition.</p></div>
+  <div class="grid g4">
+    <article class="aud lift reveal"><img data-src="photo-1549317661-bd32c8ce0db2" alt="Car on an open road"><div class="body"><div class="tag">Private customers</div><h3>Car delivered to your door</h3><ul><li>Bought a car in another emirate</li><li>Service and repair runs</li><li>Moving home or airport drop-off</li></ul><a href="#book">Book a delivery →</a></div></article>
+    <article class="aud lift reveal d1"><img data-src="photo-1560179707-f14e90ef3623" alt="Modern car showroom building"><div class="body"><div class="tag">Dealerships</div><h3>Stock moves &amp; customer handovers</h3><ul><li>Bulk bookings, branch billing</li><li>Branded handover for buyers</li><li>Monthly VAT invoices</li></ul><a href="#business">Open a dealer account →</a></div></article>
+    <article class="aud lift reveal d2"><img data-src="photo-1503376780353-7e6692767b70" alt="Sports car parked"><div class="body"><div class="tag">Traders &amp; auctions</div><h3>Collect from auction, deliver same day</h3><ul><li>Pick-ups from auction yards</li><li>Proof of condition at every stage</li><li>Pay per job, no contract</li></ul><a href="#book">Book a trade move →</a></div></article>
+    <article class="aud lift reveal d3"><img data-src="photo-1533473359331-0135ef1b58bf" alt="Cars on a highway"><div class="body"><div class="tag">Fleets &amp; leasing</div><h3>Deliveries, returns &amp; rotations</h3><ul><li>Scheduled recurring moves</li><li>Driver and job reporting</li><li>API for your systems</li></ul><a href="#business">Talk to our team →</a></div></article>
+  </div>
+</section>
+
+<!-- ROUTES -->
+<section id="routes" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap" style="padding-top:90px;padding-bottom:90px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:28px">
+      <div class="reveal" style="max-width:620px"><div class="eyebrow">Popular routes</div><h2 class="h2">Fixed prices on the UAE's busiest routes.</h2><p class="lead">Tap a route to load it into the quote form.</p></div>
+    </div>
+    <div class="chips reveal" id="chips"><button class="chip on" data-f="all">All routes</button><button class="chip" data-f="dxb">From Dubai</button><button class="chip" data-f="auh">From Abu Dhabi</button><button class="chip" data-f="nor">Northern Emirates</button></div>
+    <div class="grid g3" id="routeGrid"></div>
+  </div>
+</section>
+
+<!-- TRACKING -->
+<section class="track" id="tracking">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow" style="color:var(--accent-2)">Live GPS tracking</div>
+      <h2 class="h2">Know exactly where your vehicle is. Every minute.</h2>
+      <p class="lead">Customers get a live tracking link by SMS and WhatsApp. Dealers see every vehicle in transit on one map, with ETAs that update from the driver's phone.</p>
+      <form class="track-form" id="trackForm"><label for="trackRef" style="position:absolute;left:-9999px">Booking reference</label><input id="trackRef" placeholder="Enter booking reference e.g. MMC-24817" autocomplete="off"><button class="btn btn-primary" type="submit">Track vehicle</button></form>
+      <div class="hint">Try the demo: <button type="button" id="demoRef">MMC-24817</button> or make a booking above and track it here.</div>
+      <ol class="tl" id="timeline"></ol>
+    </div>
+    <div class="mapcard reveal d1">
+      <div id="map" role="img" aria-label="Live map of the vehicle route in Dubai"></div>
+      <div class="mapbar">
+        <img class="avatar" data-src="photo-1500648767791-00dcc994a43e" alt="Driver profile photo">
+        <div style="flex:1 1 180px;min-width:0"><div style="font-weight:600" id="drvName">Ahmed K. · Range Rover Velar</div><div style="font-size:13px;color:var(--muted-2)" id="drvMeta">MMC-24817 · Dubai Marina → Downtown Dubai</div></div>
+        <div style="text-align:right"><div style="font-size:12px;color:var(--muted-2)">ETA</div><div class="eta" id="eta">–</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HANDOVER -->
+<section class="handover">
+  <div class="wrap">
+    <div class="card-w report reveal">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px">
+        <div><div class="qlabel">Digital handover report</div><div style="font:700 22px 'Inter Tight'">MMC-24817 · Collection</div></div>
+        <span class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Signed by both parties</span>
+      </div>
+      <div class="photos" id="photos"></div>
+      <div class="stat3"><div>Odometer<b>38,214 km</b></div><div>Fuel<b>3/4 tank</b></div><div>Keys<b>2 sets</b></div></div>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:16px;font-size:13px;color:var(--muted);flex-wrap:wrap">
+        <span>Collected 10:42 · GPS 25.0805, 55.1403</span>
+        <button class="btn btn-line" style="min-height:40px;margin-left:auto" id="pdfBtn">Download PDF</button>
+      </div>
+    </div>
+    <div class="reveal d1">
+      <div class="eyebrow">Vehicle condition reports</div>
+      <h2 class="h2">Proof of condition. At every handover.</h2>
+      <p class="lead">Disputes about scratches and kerbed alloys end here. Every collection and delivery produces a timestamped, GPS-stamped photo report that both sides sign on screen.</p>
+      <div class="feature-list">
+        <div><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/></svg><div><b>Guided photo checklist</b><span>Front, rear, sides, wheels, interior, dash and boot — the app won't let a driver skip one.</span></div></div>
+        <div><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M6 16l8-8 3 3-8 8H6z"/></svg><div><b>E-signatures</b><span>Customer and driver sign on the phone; a PDF copy goes to both instantly.</span></div></div>
+        <div><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/></svg><div><b>Time and location stamped</b><span>Every photo records when and where it was taken.</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUSINESS -->
+<section class="biz" id="business">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Dealerships &amp; trade</div>
+      <h2 class="h2">Move stock, not spreadsheets.</h2>
+      <p class="lead">Book single or bulk moves, add vehicles by plate or VIN, bill each branch separately, and download monthly invoices and job reports from one account.</p>
+      <div class="feat4">
+        <div><b>Bulk bookings</b><span>CSV upload or API</span></div>
+        <div><b>Monthly invoicing</b><span>VAT-ready, per branch</span></div>
+        <div><b>Team accounts</b><span>Roles and approvals</span></div>
+        <div><b>Reports</b><span>Job history and spend</span></div>
+      </div>
+      <div class="biz-img"><img data-src="photo-1492144534655-ae79c964c9d7" alt="Row of new cars at a dealership"></div>
+    </div>
+    <div class="card-w formcard reveal d1" id="bizCard">
+      <form id="bizForm" novalidate>
+        <h3>Open a business account</h3>
+        <p style="margin:0;color:var(--muted);font-size:15px">Our UAE team will call you back within one working day.</p>
+        <div class="formgrid">
+          <div class="field"><label for="bCo">Company name</label><input id="bCo" required><span class="msg"></span></div>
+          <div class="field"><label for="bType">Business type</label><select id="bType"><option>Car dealership</option><option>Used-car trader</option><option>Auction house</option><option>Leasing / fleet</option><option>Other</option></select></div>
+          <div class="field"><label for="bName">Your name</label><input id="bName" required><span class="msg"></span></div>
+          <div class="field"><label for="bPhone">Mobile</label><input id="bPhone" type="tel" placeholder="+971 5X XXX XXXX" required><span class="msg"></span></div>
+          <div class="field full"><label for="bEmail">Work email</label><input id="bEmail" type="email" required><span class="msg"></span></div>
+          <div class="field full"><label for="bVol">Vehicles moved per month</label><select id="bVol"><option>1–10</option><option>11–50</option><option>51–200</option><option>200+</option></select></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:18px" type="submit">Request a call back</button>
+      </form>
+      <div class="success" id="bizOk"><div class="tickc"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div><h3>Thanks — request received</h3><p style="color:var(--muted)" id="bizOkMsg"></p><button class="btn btn-line" id="bizReset">Send another</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- DRIVERS -->
+<section class="drivers" id="drivers">
+  <div class="wrap">
+    <div class="driver-photo reveal">
+      <img data-src="photo-1449965408869-eaa3f722e40d" alt="Driver at the wheel">
+      <div class="float-card" style="left:20px;top:24px"><div class="ico" style="width:40px;height:40px;background:var(--ok-soft);color:var(--ok)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg></div><div><b style="font-size:14px">Job completed</b><div style="font-size:12px;color:var(--muted)">Al Quoz → Abu Dhabi</div></div></div>
+      <div class="float-card two" style="right:20px;bottom:28px"><div><div style="font-size:12px;color:var(--muted)">New job offer</div><b style="font-size:15px">Business Bay → JLT</b><div style="font-size:12px;color:var(--ok);font-weight:700">Today 16:00</div></div></div>
+    </div>
+    <div class="reveal d1">
+      <div class="eyebrow">Become a MoveMyCar driver</div>
+      <h2 class="h2">Drive great cars. Choose your hours. Get paid weekly.</h2>
+      <p class="lead">Register in the app, upload your UAE driving licence and Emirates ID, and complete a short assessment. Once approved, pick up jobs that fit around your day.</p>
+      <div class="earn">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+          <div><div style="font-size:13px;color:var(--muted-2)">Jobs per week</div><div style="font:700 22px 'Inter Tight'" id="jobsN">10 jobs</div></div>
+          <div style="text-align:right"><div style="font-size:13px;color:var(--muted-2)">Estimated weekly earnings*</div><div class="big" id="earnN">AED 2,500</div></div>
+        </div>
+        <label for="jobsR" style="position:absolute;left:-9999px">Jobs per week</label>
+        <input type="range" id="jobsR" min="2" max="30" value="10">
+        <div style="font-size:12px;color:var(--muted-2)">*Prototype figure, based on a sample average of AED 250 per job.</div>
+      </div>
+      <div class="req">
+        <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Valid UAE driving licence</div>
+        <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Emirates ID &amp; residence visa</div>
+        <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Clean driving record</div>
+        <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Smartphone (iOS or Android)</div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn btn-dark" id="openDriver">Apply to drive</button><a class="btn btn-line" href="#faq">Driver FAQs</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="reveal"><div class="eyebrow">FAQ</div><h2 class="h2">Questions, answered.</h2><p class="lead">Can't find what you need? Our UAE team is on WhatsApp seven days a week.</p></div>
+    <div class="reveal d1" id="faqList"></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="wrap" style="padding-top:80px">
+  <div class="cta reveal">
+    <div style="max-width:560px;position:relative;z-index:1"><h2 style="font-size:clamp(28px,3.5vw,40px)">Need a car moved this week?</h2><p>Get an instant price, book a driver and track the whole journey from your phone.</p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;position:relative;z-index:1"><a class="btn" href="#book" style="background:#fff;color:var(--ink)">Get instant quote</a><a class="btn" href="#business" style="border:1px solid rgba(255,255,255,.6);color:#fff">Business account</a></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div class="col" style="max-width:320px"><div class="logo">MoveMyCar<span>.ae</span></div><p style="margin:6px 0 0">Professional vehicle collection, delivery and driver services for customers, dealerships and traders across the UAE and the UK.</p>
+        <form class="news" id="newsForm"><label for="newsE" style="position:absolute;left:-9999px">Email</label><input id="newsE" type="email" placeholder="Email for updates"><button class="btn btn-primary" style="min-height:44px">Join</button></form></div>
+      <div class="col"><b>Services</b><a href="#book">Car delivery</a><a href="#business">Dealer moves</a><a href="#routes">Popular routes</a><a href="#tracking">Live tracking</a></div>
+      <div class="col"><b>Company</b><a href="#top">About us</a><a href="#drivers">Drive with us</a><a href="#faq">Help centre</a><a href="#business">Contact</a></div>
+      <div class="col"><b>Contact</b><span>[UAE phone number]</span><span>[Office address], Dubai</span><span>[hello@movemycar.ae]</span><span>UK: movemycar.co.uk</span></div>
+    </div>
+    <div class="bottom"><span>© 2026 MoveMyCar. Prototype for client review — no live bookings or payments.</span><span>Terms · Privacy · Cookies</span></div>
+  </div>
+</footer>
+
+<a class="wa" href="#faq" aria-label="Chat on WhatsApp"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.8-1.1-4.6-4-4.8-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg></a>
+
+<!-- BOOKING MODAL -->
+<div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
+  <div class="sheet">
+    <div class="sheet-h"><div><div class="qlabel" id="bkStepLbl">Step 1 of 4</div><h3 id="bkTitle" style="font-size:22px">Journey details</h3></div><button class="x" data-close aria-label="Close">×</button></div>
+    <div class="stepper"><div class="on"></div><div></div><div></div><div></div></div>
+    <div class="sheet-b">
+      <div class="pane on" data-pane="0">
+        <div class="formgrid" style="margin-top:0">
+          <div class="field"><label for="mFrom">Collect from</label><select id="mFrom"></select></div>
+          <div class="field"><label for="mTo">Deliver to</label><select id="mTo"></select></div>
+          <div class="field full"><label for="mAddr1">Collection address</label><input id="mAddr1" placeholder="Building, street, area"><span class="msg"></span></div>
+          <div class="field full"><label for="mAddr2">Delivery address</label><input id="mAddr2" placeholder="Building, street, area"><span class="msg"></span></div>
+          <div class="field"><label for="mDate">Date</label><input type="date" id="mDate"></div>
+          <div class="field"><label for="mTime">Collection window</label><select id="mTime"><option>08:00 – 10:00</option><option>10:00 – 12:00</option><option>12:00 – 14:00</option><option>14:00 – 16:00</option><option>16:00 – 18:00</option></select></div>
+        </div>
+      </div>
+      <div class="pane" data-pane="1">
+        <div class="qlabel" style="margin-bottom:10px">Vehicle type</div>
+        <div class="opts" id="vehOpts">
+          <button type="button" class="opt" data-v="std"><b>Saloon</b><span>Hatchback, sedan</span></button>
+          <button type="button" class="opt" data-v="suv"><b>SUV / 4x4</b><span>Patrol, Land Cruiser</span></button>
+          <button type="button" class="opt" data-v="prem"><b>Prestige</b><span>Sports, luxury</span></button>
+          <button type="button" class="opt" data-v="van"><b>Van</b><span>Light commercial</span></button>
+        </div>
+        <div class="formgrid">
+          <div class="field"><label for="mMake">Make &amp; model</label><input id="mMake" placeholder="e.g. Toyota Land Cruiser"><span class="msg"></span></div>
+          <div class="field"><label for="mPlate">Plate number</label><input id="mPlate" placeholder="e.g. Dubai P 48213"><span class="msg"></span></div>
+          <div class="field"><label for="mGear">Gearbox</label><select id="mGear"><option>Automatic</option><option>Manual</option></select></div>
+          <div class="field"><label for="mRoad">Roadworthy?</label><select id="mRoad"><option>Yes, it drives</option><option>No — needs a transporter</option></select></div>
+        </div>
+      </div>
+      <div class="pane" data-pane="2">
+        <div class="formgrid" style="margin-top:0">
+          <div class="field full"><label for="mName">Full name</label><input id="mName" autocomplete="name"><span class="msg"></span></div>
+          <div class="field"><label for="mPhone">Mobile (WhatsApp)</label><input id="mPhone" type="tel" placeholder="+971 5X XXX XXXX"><span class="msg"></span></div>
+          <div class="field"><label for="mEmail">Email</label><input id="mEmail" type="email"><span class="msg"></span></div>
+          <div class="field full"><label for="mNotes">Notes for the driver (optional)</label><textarea id="mNotes" rows="3" placeholder="Parking level, key handover, gate code…"></textarea></div>
+        </div>
+      </div>
+      <div class="pane" data-pane="3">
+        <div id="summary"></div>
+        <div class="qlabel" style="margin:18px 0 10px">Payment method</div>
+        <div class="opts" id="payOpts">
+          <button type="button" class="opt on" data-p="card"><b>Card</b><span>Visa, Mastercard</span></button>
+          <button type="button" class="opt" data-p="apple"><b>Apple Pay</b><span>One tap</span></button>
+          <button type="button" class="opt" data-p="inv"><b>Invoice</b><span>Business accounts</span></button>
+        </div>
+        <div class="demo-note">Prototype mode — no payment is taken and no details are stored.</div>
+      </div>
+      <div class="pane" data-pane="4" style="text-align:center;padding:20px 0">
+        <div class="tickc"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h3 style="font-size:24px">Booking confirmed</h3>
+        <div class="ref" id="bkRef">MMC-00000</div>
+        <p style="color:var(--muted);margin:0 0 20px" id="bkMsg"></p>
+        <button class="btn btn-primary" id="trackMine">Track this booking</button>
+      </div>
+    </div>
+    <div class="sheet-f" id="bkFoot"><button class="btn btn-line" id="bkBack">Back</button><div style="display:flex;align-items:center;gap:14px"><span style="font:700 18px 'Inter Tight'" id="bkTotal"></span><button class="btn btn-primary" id="bkNext">Continue</button></div></div>
+  </div>
+</div>
+
+<!-- DRIVER MODAL -->
+<div class="modal" id="drvModal" role="dialog" aria-modal="true" aria-labelledby="drvTitle">
+  <div class="sheet">
+    <div class="sheet-h"><h3 id="drvTitle" style="font-size:22px">Apply to drive with MoveMyCar</h3><button class="x" data-close aria-label="Close">×</button></div>
+    <div class="sheet-b">
+      <form id="drvForm" novalidate>
+        <div class="formgrid" style="margin-top:0">
+          <div class="field"><label for="dName">Full name</label><input id="dName"><span class="msg"></span></div>
+          <div class="field"><label for="dPhone">Mobile</label><input id="dPhone" type="tel" placeholder="+971 5X XXX XXXX"><span class="msg"></span></div>
+          <div class="field"><label for="dEmi">Emirate you live in</label><select id="dEmi"><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option></select></div>
+          <div class="field"><label for="dYrs">Years holding UAE licence</label><select id="dYrs"><option>Less than 2</option><option>2–5</option><option>5–10</option><option>10+</option></select></div>
+          <div class="field full"><label for="dLic">Upload driving licence (photo or PDF)</label><input id="dLic" type="file" accept="image/*,.pdf" style="padding-top:12px"><span class="msg"></span></div>
+          <div class="field full" style="flex-direction:row;align-items:center;gap:10px"><input id="dOk" type="checkbox" style="width:20px;height:20px"><label for="dOk" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:500">I agree to a background and driving-history check</label></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:18px" type="submit">Submit application</button>
+      </form>
+      <div class="success" id="drvOk"><div class="tickc"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div><h3>Application received</h3><p style="color:var(--muted)" id="drvOkMsg"></p></div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox"><img alt="Handover photo enlarged" id="lbImg"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const IMG = id => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1200&q=70`;
+const toast = (m) => { const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2800); };
+
+/* ---------- images with graceful fallback ---------- */
+$$('img[data-src]').forEach(img => {
+  img.onerror = () => { img.style.visibility='hidden'; img.parentElement.classList.add('imgfail'); };
+  img.src = IMG(img.dataset.src);
+});
+const hero = new Image();
+hero.onload = () => $('#heroBg').style.backgroundImage = `url(${hero.src})`;
+hero.src = 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=2000&q=70';
+
+/* ---------- nav ---------- */
+const nav = $('#nav');
+const onScroll = () => nav.classList.toggle('scrolled', scrollY > 40);
+addEventListener('scroll', onScroll, {passive:true}); onScroll();
+$('#burger').onclick = () => { const m=$('#mobileMenu'); const o=m.classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); };
+$$('#mobileMenu a').forEach(a => a.onclick = () => $('#mobileMenu').classList.remove('open'));
+
+/* ---------- rotating word ---------- */
+const words = ['delivered','collected','moved','tracked'];
+let wi = 0;
+setInterval(() => { wi=(wi+1)%words.length; $('#rotator').innerHTML = `<span>${words[wi]}</span>`; }, 2400);
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }), {threshold:.15});
+$$('.reveal').forEach(el => io.observe(el));
+
+/* ---------- locations & pricing ---------- */
+const LOC = {
+  marina:{n:'Dubai Marina',c:[25.0805,55.1403]}, downtown:{n:'Downtown Dubai',c:[25.1972,55.2744]}, deira:{n:'Deira',c:[25.2697,55.3095]},
+  alquoz:{n:'Al Quoz',c:[25.1400,55.2300]}, dip:{n:'Dubai Investments Park',c:[24.9850,55.1700]}, dxb:{n:'Dubai Airport (DXB)',c:[25.2532,55.3657]},
+  auh:{n:'Abu Dhabi City',c:[24.4539,54.3773]}, reem:{n:'Al Reem Island',c:[24.4990,54.4040]}, ain:{n:'Al Ain',c:[24.2075,55.7447]},
+  shj:{n:'Sharjah',c:[25.3463,55.4209]}, ajm:{n:'Ajman',c:[25.4052,55.5136]}, rak:{n:'Ras Al Khaimah',c:[25.7895,55.9432]},
+  fuj:{n:'Fujairah',c:[25.1288,56.3265]}, uaq:{n:'Umm Al Quwain',c:[25.5647,55.5552]}
+};
+const opts = Object.entries(LOC).map(([k,v]) => `<option value="${k}">${v.n}</option>`).join('');
+['#qFrom','#qTo','#mFrom','#mTo'].forEach(s => $(s).innerHTML = opts);
+$('#qFrom').value='marina'; $('#qTo').value='auh';
+const MULT = {std:1, suv:1.15, prem:1.45, van:1.25};
+const VEH_N = {std:'Saloon / hatchback', suv:'SUV / 4x4', prem:'Prestige & sports', van:'Van / light commercial'};
+function dist(a,b){
+  const A=LOC[a].c, B=LOC[b].c, R=6371, r=x=>x*Math.PI/180;
+  const d = 2*R*Math.asin(Math.sqrt(Math.sin(r(B[0]-A[0])/2)**2 + Math.cos(r(A[0]))*Math.cos(r(B[0]))*Math.sin(r(B[1]-A[1])/2)**2));
+  return Math.max(6, Math.round(d*1.3));
+}
+function mins(km){ const m=Math.round(km/85*60)+12; return m>=60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m} min`; }
+function price(km, veh, mode='single', qty=1){
+  let p = (120 + km*2.1) * MULT[veh];
+  if(mode==='dealer') p *= .9;
+  if(mode==='multi'){ p *= qty; if(qty>=3) p*=.9; }
+  return Math.round(p*1.05/5)*5;
+}
+const fmt = n => 'AED ' + n.toLocaleString('en-US');
+
+/* ---------- quote widget ---------- */
+let mode='single';
+const today = new Date(); today.setDate(today.getDate()+2);
+const iso = today.toISOString().slice(0,10);
+$('#qDate').value = iso; $('#qDate').min = new Date().toISOString().slice(0,10);
+$$('.tab').forEach(t => t.onclick = () => {
+  $$('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on'); mode=t.dataset.tab;
+  $('#qtyWrap').style.display = mode==='multi' ? 'flex' : 'none';
+  $('#multiNote').style.display = mode==='single' ? 'none' : 'block';
+  if($('#quoteBox').classList.contains('show')) runQuote();
+});
+$('#swap').onclick = () => { const a=$('#qFrom').value; $('#qFrom').value=$('#qTo').value; $('#qTo').value=a; if($('#quoteBox').classList.contains('show')) runQuote(); };
+function animateNum(el, to, prefix='', suffix=''){
+  const start=performance.now(), from=0, dur=700;
+  const step = t => { const k=Math.min(1,(t-start)/dur), e=1-Math.pow(1-k,3); el.textContent = prefix + Math.round(from+(to-from)*e).toLocaleString('en-US') + suffix; if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function runQuote(){
+  const f=$('#qFrom').value, t=$('#qTo').value;
+  if(f===t){ toast('Collection and delivery points must be different'); return; }
+  const km=dist(f,t), qty=+$('#qQty').value||1;
+  $('#quoteBox').classList.remove('show'); void $('#quoteBox').offsetWidth; $('#quoteBox').classList.add('show');
+  animateNum($('#qKm'), km, '', ' km');
+  $('#qTime').textContent = mins(km);
+  animateNum($('#qPrice'), price(km,$('#qVeh').value,mode,qty), 'AED ');
+}
+$('#quoteForm').onsubmit = e => { e.preventDefault(); runQuote(); };
+['#qFrom','#qTo','#qVeh','#qQty'].forEach(s => $(s).addEventListener('change', () => { if($('#quoteBox').classList.contains('show')) runQuote(); }));
+
+/* ---------- routes ---------- */
+const ROUTES = [['marina','auh','dxb'],['alquoz','ain','dxb'],['downtown','shj','dxb'],['dip','rak','dxb'],['auh','deira','auh'],['reem','marina','auh'],['auh','ain','auh'],['shj','fuj','nor'],['ajm','downtown','nor'],['rak','dxb','nor'],['uaq','reem','nor'],['deira','fuj','dxb']];
+$('#routeGrid').innerHTML = ROUTES.map(([a,b,g]) => { const km=dist(a,b); return `
+  <div class="card-w route lift" data-g="${g}">
+    <div class="rt"><span>${LOC[a].n}</span><svg width="22" height="14" viewBox="0 0 22 14" fill="none" stroke="#C9441C" stroke-width="2"><path d="M1 7h19M14 1l6 6-6 6"/></svg><span>${LOC[b].n}</span></div>
+    <div class="meta"><span>${km} km</span><span>≈ ${mins(km)}</span><span>Same-day available</span></div>
+    <div class="foot"><div><div class="from">Saloon from</div><div class="amt">${fmt(price(km,'std'))}</div></div><button class="btn btn-line" style="min-height:40px" data-load="${a},${b}">Quote this route</button></div>
+  </div>`; }).join('');
+$$('#chips .chip').forEach(c => c.onclick = () => {
+  $$('#chips .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+  $$('#routeGrid .route').forEach(r => r.classList.toggle('hide', c.dataset.f!=='all' && r.dataset.g!==c.dataset.f));
+});
+$('#routeGrid').addEventListener('click', e => { const b=e.target.closest('[data-load]'); if(!b) return; const [a,c]=b.dataset.load.split(','); $('#qFrom').value=a; $('#qTo').value=c; $('#book').scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(runQuote,500); });
+
+/* ---------- handover photos ---------- */
+const PH = [['Front','photo-1494976388531-d1058494cdd8'],['Rear','photo-1502877338535-766e1452684a'],['Left','photo-1553440569-bcc63803a83d'],['Right','photo-1580273916550-e323be2ae537'],['Interior','photo-1503736334956-4c8f8e92946d'],['Dash','photo-1489824904134-891ab64532f1'],['Wheels','photo-1542362567-b07e54358753'],['Boot','photo-1544636331-e26879cd4d9b']];
+$('#photos').innerHTML = PH.map(([l,id]) => `<figure data-full="${id}"><img src="${IMG(id).replace('w=1200','w=300')}" alt="${l} photo" onerror="this.style.visibility='hidden'"><figcaption>${l}</figcaption></figure>`).join('');
+$('#photos').onclick = e => { const f=e.target.closest('figure'); if(!f) return; $('#lbImg').src=IMG(f.dataset.full); $('#lightbox').classList.add('open'); };
+$('#lightbox').onclick = () => $('#lightbox').classList.remove('open');
+$('#pdfBtn').onclick = () => toast('PDF export will be generated by the live platform');
+
+/* ---------- tracking map ---------- */
+const DEMO_PATH = [[25.0805,55.1403],[25.0870,55.1480],[25.0960,55.1590],[25.1060,55.1730],[25.1160,55.1870],[25.1270,55.2010],[25.1390,55.2130],[25.1520,55.2260],[25.1640,55.2370],[25.1760,55.2470],[25.1860,55.2580],[25.1930,55.2680],[25.1972,55.2744]];
+function densify(p, n=12){ const out=[]; for(let i=0;i<p.length-1;i++){ for(let k=0;k<n;k++){ const t=k/n; out.push([p[i][0]+(p[i+1][0]-p[i][0])*t, p[i][1]+(p[i+1][1]-p[i][1])*t]); } } out.push(p[p.length-1]); return out; }
+function curvePath(a,b){ // gentle road-like curve between two points
+  const mid=[(a[0]+b[0])/2 + (b[1]-a[1])*.08, (a[1]+b[1])/2 - (b[0]-a[0])*.08];
+  const pts=[]; for(let i=0;i<=40;i++){ const t=i/40; pts.push([(1-t)**2*a[0]+2*(1-t)*t*mid[0]+t*t*b[0], (1-t)**2*a[1]+2*(1-t)*t*mid[1]+t*t*b[1]]); } return pts;
+}
+const BOOKINGS = { 'MMC-24817': { from:'marina', to:'downtown', car:'Range Rover Velar', driver:'Ahmed K.', path: densify(DEMO_PATH) } };
+let map, line, done, carM, startM, endM, timer;
+function initMap(){
+  if(map || !window.L) return;
+  map = L.map('map', {zoomControl:false, scrollWheelZoom:false, attributionControl:true});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:'© OpenStreetMap © CARTO', maxZoom:19}).addTo(map);
+  L.control.zoom({position:'topright'}).addTo(map);
+  startTrack('MMC-24817');
+}
+function steps(b){ return [
+  ['Booking confirmed','Paid · confirmation sent by email & WhatsApp'],
+  [`Driver ${b.driver} assigned`,'Background-checked · rated 4.9'],
+  [`Vehicle collected · ${LOC[b.from].n}`,'Photo handover signed'],
+  ['In transit','Live GPS from driver app'],
+  [`Delivered · ${LOC[b.to].n}`,'Delivery report & invoice issued']
+]; }
+function renderTimeline(b, stage, remainKm){
+  const s = steps(b);
+  $('#timeline').innerHTML = s.map((x,i) => `<li class="${i<stage?'done':i===stage?'now':''}"><div class="rail"><span class="b"></span><span class="l"></span></div><div><div class="t">${x[0]}</div><div class="m">${i===3 && stage===3 ? remainKm+' km to destination' : x[1]}</div></div></li>`).join('');
+}
+function startTrack(ref){
+  const b = BOOKINGS[ref]; if(!b){ toast('Booking reference not found — try MMC-24817'); return; }
+  if(!map){ initMap(); if(!map) return; }
+  clearInterval(timer);
+  [line,done,carM,startM,endM].forEach(l => l && map.removeLayer(l));
+  const path = b.path;
+  line = L.polyline(path, {color:'#2F4D66', weight:7, opacity:.9}).addTo(map);
+  done = L.polyline([path[0]], {color:'#FF7A45', weight:5}).addTo(map);
+  startM = L.marker(path[0], {icon:L.divIcon({className:'',html:'<div class="pin" style="background:#0E1A24"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map).bindTooltip(LOC[b.from].n);
+  endM = L.marker(path[path.length-1], {icon:L.divIcon({className:'',html:'<div class="pin" style="background:#C9441C"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map).bindTooltip(LOC[b.to].n,{permanent:true,direction:'top',offset:[0,-8]});
+  carM = L.marker(path[0], {icon:L.divIcon({className:'',html:'<div class="car-marker"><i></i></div>',iconSize:[34,34],iconAnchor:[17,17]}), zIndexOffset:1000}).addTo(map);
+  map.fitBounds(line.getBounds(), {padding:[40,40]});
+  const total = dist(b.from,b.to);
+  $('#drvName').textContent = `${b.driver} · ${b.car}`;
+  $('#drvMeta').textContent = `${ref} · ${LOC[b.from].n} → ${LOC[b.to].n}`;
+  let i=0, stage=2;
+  renderTimeline(b, stage, total);
+  const tick = () => {
+    i++;
+    if(i < path.length){
+      stage = 3;
+      carM.setLatLng(path[i]); done.addLatLng(path[i]);
+      const remain = Math.max(0, Math.round(total*(1-i/(path.length-1))));
+      const etaMin = Math.round(remain/60*60)+1;
+      const d = new Date(Date.now()+etaMin*60000);
+      $('#eta').textContent = d.toTimeString().slice(0,5);
+      renderTimeline(b, stage, remain);
+    } else {
+      clearInterval(timer); renderTimeline(b, 5, 0); $('#eta').textContent='Arrived';
+      toast(`${ref} delivered — delivery report signed`);
+    }
+  };
+  setTimeout(() => { timer = setInterval(tick, 220); }, 1200);
+}
+const mapIO = new IntersectionObserver(es => { if(es[0].isIntersecting){ initMap(); mapIO.disconnect(); } }, {threshold:.2});
+mapIO.observe($('#map'));
+$('#trackForm').onsubmit = e => { e.preventDefault(); startTrack($('#trackRef').value.trim().toUpperCase()); };
+$('#demoRef').onclick = () => { $('#trackRef').value='MMC-24817'; startTrack('MMC-24817'); };
+
+/* ---------- validation helper ---------- */
+function check(id, test, msg){
+  const el=$(id), f=el.closest('.field'), ok=test(el.value.trim(), el);
+  f.classList.toggle('err', !ok); const m=f.querySelector('.msg'); if(m) m.textContent = ok ? '' : msg; return ok;
+}
+const req = v => v.length > 1;
+const phone = v => /^\+?[\d\s-]{9,15}$/.test(v);
+const email = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+/* ---------- booking modal ---------- */
+const bm = $('#bookModal'); let bstep=0, bveh='suv', bpay='card';
+const TITLES = ['Journey details','Your vehicle','Your details','Review & pay','Done'];
+function openModal(m){ m.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(m){ m.classList.remove('open'); document.body.style.overflow=''; }
+$$('.modal').forEach(m => { m.addEventListener('click', e => { if(e.target===m || e.target.closest('[data-close]')) closeModal(m); }); });
+addEventListener('keydown', e => { if(e.key==='Escape'){ $$('.modal.open').forEach(closeModal); $('#lightbox').classList.remove('open'); } });
+document.addEventListener('click', e => {
+  if(!e.target.closest('[data-open-booking]')) return;
+  $('#mFrom').value=$('#qFrom').value; $('#mTo').value=$('#qTo').value; $('#mDate').value=$('#qDate').value; $('#mDate').min=$('#qDate').min;
+  bveh=$('#qVeh').value; syncOpts(); setStep(0); openModal(bm); $('#mobileMenu').classList.remove('open');
+});
+function syncOpts(){ $$('#vehOpts .opt').forEach(o=>o.classList.toggle('on',o.dataset.v===bveh)); $$('#payOpts .opt').forEach(o=>o.classList.toggle('on',o.dataset.p===bpay)); }
+$('#vehOpts').onclick = e => { const o=e.target.closest('.opt'); if(o){ bveh=o.dataset.v; syncOpts(); updTotal(); } };
+$('#payOpts').onclick = e => { const o=e.target.closest('.opt'); if(o){ bpay=o.dataset.p; syncOpts(); } };
+function curPrice(){ const f=$('#mFrom').value,t=$('#mTo').value; return f===t?0:price(dist(f,t),bveh); }
+function updTotal(){ const p=curPrice(); $('#bkTotal').textContent = p ? fmt(p) : ''; }
+['#mFrom','#mTo'].forEach(s=>$(s).addEventListener('change',updTotal));
+function setStep(n){
+  bstep=n;
+  $$('#bookModal .pane').forEach(p=>p.classList.toggle('on', +p.dataset.pane===n));
+  $$('#bookModal .stepper div').forEach((d,i)=>d.classList.toggle('on', i<=n));
+  $('#bkTitle').textContent = TITLES[n];
+  $('#bkStepLbl').textContent = n<4 ? `Step ${n+1} of 4` : 'Confirmed';
+  $('#bkFoot').style.display = n===4 ? 'none' : 'flex';
+  $('#bkBack').style.visibility = n===0 ? 'hidden' : 'visible';
+  $('#bkNext').textContent = n===3 ? (bpay==='inv'?'Confirm booking':'Pay & confirm') : 'Continue';
+  if(n===3) buildSummary();
+  updTotal();
+}
+function buildSummary(){
+  const f=$('#mFrom').value,t=$('#mTo').value,km=dist(f,t),p=price(km,bveh),vat=Math.round(p-p/1.05);
+  const rows=[['Route',`${LOC[f].n} → ${LOC[t].n}`],['Distance',`${km} km · ≈ ${mins(km)}`],['Date',`${$('#mDate').value} · ${$('#mTime').value}`],['Vehicle',`${$('#mMake').value} (${VEH_N[bveh]})`],['Plate',$('#mPlate').value],['Customer',`${$('#mName').value} · ${$('#mPhone').value}`],['Includes VAT (5%)',fmt(vat)]];
+  $('#summary').innerHTML = rows.map(r=>`<div class="sumrow"><span>${r[0]}</span><span style="text-align:right">${r[1].replace(/</g,'&lt;')}</span></div>`).join('') + `<div class="sumrow total"><span>Total</span><span>${fmt(p)}</span></div>`;
+}
+$('#bkBack').onclick = () => setStep(Math.max(0,bstep-1));
+$('#bkNext').onclick = () => {
+  if(bstep===0){
+    if($('#mFrom').value===$('#mTo').value){ toast('Collection and delivery must be different'); return; }
+    const a=check('#mAddr1',req,'Please enter the collection address'), b=check('#mAddr2',req,'Please enter the delivery address'); if(!(a&&b)) return;
+  }
+  if(bstep===1){ const a=check('#mMake',req,'Enter make and model'), b=check('#mPlate',req,'Enter the plate number'); if(!(a&&b)) return; }
+  if(bstep===2){ const a=check('#mName',req,'Enter your name'), b=check('#mPhone',phone,'Enter a valid mobile number'), c=check('#mEmail',email,'Enter a valid email'); if(!(a&&b&&c)) return; }
+  if(bstep===3){
+    const btn=$('#bkNext'); btn.disabled=true; btn.textContent='Processing…';
+    setTimeout(() => {
+      btn.disabled=false;
+      const ref='MMC-'+(25000+Math.floor(Math.random()*9000));
+      const f=$('#mFrom').value,t=$('#mTo').value;
+      BOOKINGS[ref] = { from:f, to:t, car:$('#mMake').value, driver:['Omar S.','Joseph P.','Rashid M.'][Math.floor(Math.random()*3)], path: curvePath(LOC[f].c, LOC[t].c) };
+      $('#bkRef').textContent = ref;
+      $('#bkMsg').textContent = `We've sent confirmation to ${$('#mEmail').value}. Your driver's details will follow by WhatsApp.`;
+      $('#trackMine').dataset.ref = ref;
+      setStep(4);
+    }, 1400);
+    return;
+  }
+  setStep(bstep+1);
+};
+$('#trackMine').onclick = () => { const r=$('#trackMine').dataset.ref; closeModal(bm); $('#trackRef').value=r; $('#tracking').scrollIntoView({behavior:'smooth'}); setTimeout(()=>startTrack(r), 700); };
+
+/* ---------- business form ---------- */
+$('#bizForm').onsubmit = e => {
+  e.preventDefault();
+  const ok=[check('#bCo',req,'Enter company name'),check('#bName',req,'Enter your name'),check('#bPhone',phone,'Enter a valid mobile number'),check('#bEmail',email,'Enter a valid email')].every(Boolean);
+  if(!ok) return;
+  $('#bizOkMsg').textContent = `We'll call ${$('#bName').value} at ${$('#bCo').value} on ${$('#bPhone').value} within one working day.`;
+  $('#bizForm').style.display='none'; $('#bizOk').classList.add('show');
+};
+$('#bizReset').onclick = () => { $('#bizForm').reset(); $('#bizForm').style.display=''; $('#bizOk').classList.remove('show'); };
+
+/* ---------- driver ---------- */
+const jr=$('#jobsR'); const upd=()=>{ $('#jobsN').textContent=jr.value+' jobs'; $('#earnN').textContent=fmt(jr.value*250); jr.style.background=''; };
+jr.oninput=upd; upd();
+$('#openDriver').onclick = () => { $('#drvForm').style.display=''; $('#drvOk').classList.remove('show'); openModal($('#drvModal')); };
+$('#drvForm').onsubmit = e => {
+  e.preventDefault();
+  const ok=[check('#dName',req,'Enter your name'),check('#dPhone',phone,'Enter a valid mobile number'),check('#dLic',(v)=>v.length>0,'Please upload your licence')].every(Boolean);
+  if(!ok) return;
+  if(!$('#dOk').checked){ toast('Please agree to the background check'); return; }
+  $('#drvOkMsg').textContent = `Thanks ${$('#dName').value.split(' ')[0]}. We'll WhatsApp you on ${$('#dPhone').value} to book your assessment in ${$('#dEmi').value}.`;
+  $('#drvForm').style.display='none'; $('#drvOk').classList.add('show');
+};
+
+/* ---------- FAQ ---------- */
+const FAQ = [
+  ['Is my car insured while it is being driven?','Yes. Every job is covered by transit insurance from the moment the driver signs the collection report until the delivery report is signed. Policy details are shown before you pay.'],
+  ['Who are your drivers?','Professional drivers with a valid UAE licence who pass background and driving-history checks and an in-person assessment. Customers rate every job.'],
+  ['How does the photo handover work?','At collection and delivery the driver follows a guided checklist: timestamped photos of every panel, wheels and interior, plus mileage and fuel. Both parties sign on screen and get a PDF copy.'],
+  ['Can I track my car during the journey?','Yes. You receive a live tracking link by SMS and WhatsApp as soon as your vehicle is collected, with an ETA that updates automatically.'],
+  ['Can dealerships pay monthly?','Business accounts are invoiced monthly per branch, with VAT-compliant invoices and a downloadable job history.'],
+  ['What if my car isn\'t roadworthy?','Tell us during booking and we\'ll arrange a transporter instead of a driver.']
+];
+$('#faqList').innerHTML = FAQ.map((f,i)=>`<div class="qa${i===0?' open':''}"><button aria-expanded="${i===0}"><span>${f[0]}</span><span class="pl">+</span></button><div class="ans"><div><p>${f[1]}</p></div></div></div>`).join('');
+$('#faqList').onclick = e => { const b=e.target.closest('button'); if(!b) return; const q=b.parentElement; const o=!q.classList.contains('open'); $$('#faqList .qa').forEach(x=>{x.classList.remove('open');x.firstElementChild.setAttribute('aria-expanded','false');}); if(o){q.classList.add('open'); b.setAttribute('aria-expanded','true');} };
+
+/* ---------- newsletter ---------- */
+$('#newsForm').onsubmit = e => { e.preventDefault(); if(email($('#newsE').value)){ toast('Thanks — you\'re on the list'); $('#newsE').value=''; } else toast('Please enter a valid email'); };
+
+/* ---------- language toggle (demo) ---------- */
+const AR = {nav1:'كيف نعمل',nav2:'المسارات الشائعة',nav3:'التتبع المباشر',nav4:'للمعارض',nav5:'انضم كسائق',login:'دخول الشركات',book:'احجز سائقاً',pill:'نطلق خدماتنا الآن في جميع أنحاء الإمارات',h1a:'سيارتك،',h1b:'إلى أي مكان في الإمارات',h1c:'مع سائقين محترفين.',sub:'احجز استلام وتوصيل سيارتك خلال دقائق. سائق مرخّص ومؤمَّن يستلم سيارتك ويوثّق حالتها بالصور ويوصلها إلى وجهتها، وأنت تتابع الرحلة مباشرة.'};
+const EN = {}; $$('[data-i18n]').forEach(el => EN[el.dataset.i18n]=el.textContent);
+let ar=false;
+$('#langBtn').onclick = () => { ar=!ar; document.documentElement.dir = ar?'rtl':'ltr'; document.documentElement.lang = ar?'ar':'en'; $$('[data-i18n]').forEach(el => el.textContent = (ar?AR:EN)[el.dataset.i18n] || EN[el.dataset.i18n]); $('#langBtn').textContent = ar?'English':'العربية'; toast(ar?'Arabic preview: hero and menu translated':'English'); };
+})();
+</script>
+</body>
+</html>
